@@ -1,0 +1,49 @@
+version: '3'
+services:
+
+  dbmaster:
+    image: postgres
+    volumes:
+      - $PWD/dbmaster/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "5432:5432"
+
+  dbslave_1:
+    image: postgres
+    volumes:
+      - $PWD/dbslave_1/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "15432:5432"      
+
+  dbslave_2:
+    image: postgres
+    volumes:
+      - $PWD/dbslave_2/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "25432:5432"      
+
+  dbslave_3:
+    image: postgres
+    volumes:
+      - $PWD/dbslave_3/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "35432:5432"      
+
+volumes:
+  postrgers_data:
