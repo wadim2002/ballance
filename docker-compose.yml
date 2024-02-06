@@ -1,5 +1,54 @@
-version: '3'
+version: '3.7'
 services:
+  haproxy:
+    image: haproxy:2.4
+    container_name: haproxy-lb
+    restart: "no"
+    volumes:
+      - "./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
+    ports:
+      - "4080:80"
+      - "8404:8404"
+      - "55432:5432"
+      
+  backend-3:
+    image: postgres
+    container_name: haproxy-backend-3
+    restart: "no"
+    volumes:
+      - $PWD/dbslave_1/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "15432:5432"
+  
+  backend-4:
+    image: postgres
+    container_name: haproxy-backend-4
+    restart: "no"
+    volumes:
+      - $PWD/dbslave_2/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "25432:5432"
+
+  backend-5:
+    image: postgres
+    container_name: haproxy-backend-5
+    restart: "no"
+    volumes:
+      - $PWD/dbslave_3/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "65432:5432"
 
   dbmaster:
     image: postgres
@@ -12,38 +61,60 @@ services:
     ports:
       - "5432:5432"
 
-  dbslave_1:
-    image: postgres
+  frontend-1:
+    build: .
+    container_name: nginx-frontend-1
+    command: >
+      sh -c "pip install --upgrade pip &&
+        python manage.py runserver 0.0.0.0:9000"
+    env_file: .env
     volumes:
-      - $PWD/dbslave_1/:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: "pass"
-      POSTGRES_USER: "postgres"
-      POSTGRES_DB: "postgres"
+      - .:/usr/src/dm_rest
     ports:
-      - "15432:5432"      
+      - 9000:9000
+    depends_on:
+      - backend-3
+      - backend-4
+      - dbmaster
 
-  dbslave_2:
-    image: postgres
+  nginx:
+    image: nginx:1.21
+    container_name: nginx-lb
+    restart: on-failure
     volumes:
-      - $PWD/dbslave_2/:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: "pass"
-      POSTGRES_USER: "postgres"
-      POSTGRES_DB: "postgres"
+      - "./default.conf:/etc/nginx/conf.d/default.conf"
     ports:
-      - "25432:5432"      
+      - "4088:80"
+      - "4098:8080"
 
-  dbslave_3:
-    image: postgres
+  frontend-2:
+    build: .
+    container_name: nginx-frontend-2
+    command: >
+      sh -c "pip install --upgrade pip &&
+        python manage.py runserver 0.0.0.0:4000"
+    env_file: .env
     volumes:
-      - $PWD/dbslave_3/:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: "pass"
-      POSTGRES_USER: "postgres"
-      POSTGRES_DB: "postgres"
+      - .:/usr/src/dm_rest
     ports:
-      - "35432:5432"      
+      - 4000:4000
+    depends_on:
+      - backend-3
+      - backend-4
+      - dbmaster
 
-volumes:
-  postrgers_data:
+  frontend-3:
+    build: .
+    container_name: nginx-frontend-3
+    command: >
+      sh -c "pip install --upgrade pip &&
+        python manage.py runserver 0.0.0.0:3000"
+    env_file: .env
+    volumes:
+      - .:/usr/src/dm_rest
+    ports:
+      - 3000:3000
+    depends_on:
+      - backend-3
+      - backend-4
+      - dbmaster
